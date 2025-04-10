@@ -13,7 +13,6 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, Comma
 from openai import OpenAI
 import matplotlib.pyplot as plt
 import numpy as np
-import telebot
 import requests
 import csv
 import io
@@ -29,16 +28,14 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQqQxElIhtdIiFYWPlz6SSXH6UUcsHqFxLWi_fhmv-h4-SM8Q7KB8M2DCooYTZRZU0pLNcfNAyzsQN/pub?gid=0&single=true&output=csv"
 
-
 # Webhook do Make que você criou
 MAKE_WEBHOOK_URL = "https://hook.us2.make.com/oc44mwkxo2jx2x08o9shgrxjcn8a72gr"
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQqQxElIhtdIiFYWPlz6SSXH6UUcsHqFxLWi_fhmv-h4-SM8Q7KB8M2DCooYTZRZU0pLNcfNAyzsQN/pub?gid=0&single=true&output=csv'
 
-
 # Configuração de logs
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Estados de conversa
 NOME, NIVEL, MENU, TEMA, TRADUCAO = range(5)
@@ -200,6 +197,7 @@ def carregar_dados():
         logging.info("Arquivo de dados não encontrado. Criando novo.")
     except Exception as e:
         logging.error(f"Erro ao carregar dados: {e}")
+
 
 # Funções para gamificação
 def adicionar_pontos(user_id, pontos):
@@ -740,7 +738,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         return TEMA
-    
+
     elif escolha == "progress":
         # Mostrar progresso do usuário
         pontos = pontos_usuario.get(user_id, 0)
@@ -793,7 +791,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         return MENU
-    
+
     elif escolha == "settings":
         # Mostrar configurações
         keyboard = [
@@ -1055,7 +1053,7 @@ async def tratar_texto(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Estou ansiosa para continuar nosso aprendizado juntos! 💛"
             )
         else:
-            await update.message.reply_text(
+            premium_text = (
                 "🧸 Ei! Acabou as interações grátis com a Lana English.\n"
                 "Tô amando ver sua evolução no inglês! 💬✨\n"
                 "Que tal desbloquear o acesso completo e continuar treinando comigo sem limites?\n\n"
@@ -1067,15 +1065,13 @@ async def tratar_texto(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 '<a href="https://pay.hotmart.com/C99134085F">👉 CLIQUE AQUI E ASSINE</a>\n\n'
                 "Depois de assinar, envie aqui na conversa /ativar e o código gerado após o pagamento.\n\n"
                 "📌 Ex: /ativar HP14506899281022, o seu acesso Premium será liberado!\n\n"
-                "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n",
-                parse_mode='HTML'  
-             )
+                "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n"
+            )
 
             await update.message.reply_text(premium_text, parse_mode='HTML')
-
             return
-    
-    # Incrementar contadores
+
+# Incrementar contadores
     interacoes_usuario[user_id] = interacoes_usuario.get(user_id, 0) + 1
     
     # Obter dados do usuário
@@ -1210,7 +1206,7 @@ async def tratar_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Estou ansiosa para continuar nosso aprendizado juntos! 💛"
             )
         else:
-            await update.message.reply_text(
+            premium_text = (
                 "🧸 Ei! Acabou as interações grátis com a Lana English.\n"
                 "Tô amando ver sua evolução no inglês! 💬✨\n"
                 "Que tal desbloquear o acesso completo e continuar treinando comigo sem limites?\n\n"
@@ -1222,13 +1218,12 @@ async def tratar_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 '<a href="https://pay.hotmart.com/C99134085F">👉 CLIQUE AQUI E ASSINE</a>\n\n'
                 "Depois de assinar, envie aqui na conversa /ativar e o código gerado após o pagamento.\n\n"
                 "📌 Ex: /ativar HP16060606081022, o seu acesso Premium será liberado!\n\n"
-                "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n",
-                parse_mode='HTML'  
+                "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n"
             )
 
             await update.message.reply_text(premium_text, parse_mode='HTML')
-
             return
+
 # Incrementar contadores
     interacoes_usuario[user_id] = interacoes_usuario.get(user_id, 0) + 1
     
@@ -1537,7 +1532,7 @@ async def comando_premium(update: Update, context: ContextTypes.DEFAULT_TYPE):
         '<a href="https://pay.hotmart.com/C99134085F">👉 CLIQUE AQUI E ASSINE</a>\n\n'
         "Depois de assinar, envie aqui na conversa /ativar e o código gerado após o pagamento.\n\n"
         "📌 Ex: /ativar HP18060709281022, o seu acesso Premium será liberado!\n\n"
-        "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n",  
+        "Te espero do outro lado com muito vocabulário, fluência e aquele abraço de ursa! 🐻💖.\n\n"
     )
 
     await update.message.reply_text(premium_text, parse_mode='HTML')
@@ -1641,14 +1636,11 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             # Assinatura expirada (isso não deveria acontecer pois verificamos na função verificar_acesso)
             await update.message.reply_text(
-                await update.message.reply_text(
                 "⚠️ Sua assinatura premium expirou.\n\n"
                 "Para continuar aproveitando todas as funcionalidades premium, renove sua assinatura:\n\n"
-                '<"https://pay.hotmart.com/C99134085F">👉 CLIQUE AQUI E ASSINE</a>\n\n'
+                f'<a href="{LINK_PAGAMENTO}">👉 CLIQUE AQUI E ASSINE</a>\n\n'
                 "Depois de renovar, use o comando <b>/ativar</b> com o novo código recebido.",
                 parse_mode='HTML'
-            )
-
             )
     else:
         # Usuário não tem assinatura
@@ -1656,11 +1648,11 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🔒 Você ainda não tem uma assinatura premium ativa.\n\n"
             "Adquira acesso ilimitado e desbloqueie todas as funcionalidades:\n\n"
             f'<a href="{LINK_PAGAMENTO}">👉 CLIQUE AQUI E ASSINE</a>\n\n'
-            "Após a compra, use o comando `/ativar [código]` com o código recebido.",
+            "Após a compra, use o comando <b>/ativar [código]</b> com o código recebido.",
             parse_mode='HTML'
         )
 
-# Função principal
+# Função principal (versão não assíncrona para Replit)
 def main():
     # Carregar dados salvos
     carregar_dados()
@@ -1704,7 +1696,6 @@ def main():
     application.add_handler(CommandHandler("ativar", comando_ativar))
     application.add_handler(CommandHandler("status", comando_status))
 
-    
     # Adicionar handlers de mensagem
     application.add_handler(MessageHandler(filters.VOICE, tratar_audio))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, tratar_texto))
@@ -1718,10 +1709,17 @@ def main():
     # Handler genérico para outros callback queries
     application.add_handler(CallbackQueryHandler(menu_handler))
     
-    # Iniciar bot
-    application.run_polling()
+    # Iniciar polling após cancelar qualquer webhook anterior
+    try:
+        # Primeiro limpar webhooks de forma síncrona
+        import requests
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true"
+        requests.get(url)
+    except:
+        logging.warning("Não foi possível limpar webhook via HTTP")
+    
+    # Iniciar bot com polling
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    import nest_asyncio
-    nest_asyncio.apply()
     main()
