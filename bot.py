@@ -1653,9 +1653,14 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # Função principal (versão não assíncrona para Replit)
+# Função principal (versão para webhook no Render)
 def main():
     # Carregar dados salvos
     carregar_dados()
+    
+    # URL do webhook fornecida pelo Render
+    PORT = int(os.environ.get('PORT', 8080))
+    WEBHOOK_URL = os.environ.get('WEBHOOK_URL')
     
     # Criar aplicação
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -1695,7 +1700,7 @@ def main():
     application.add_handler(CommandHandler("reset", resetar))
     application.add_handler(CommandHandler("ativar", comando_ativar))
     application.add_handler(CommandHandler("status", comando_status))
-
+    
     # Adicionar handlers de mensagem
     application.add_handler(MessageHandler(filters.VOICE, tratar_audio))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, tratar_texto))
@@ -1709,17 +1714,31 @@ def main():
     # Handler genérico para outros callback queries
     application.add_handler(CallbackQueryHandler(menu_handler))
     
-    # Iniciar polling após cancelar qualquer webhook anterior
-    try:
-        # Primeiro limpar webhooks de forma síncrona
-        import requests
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true"
-        requests.get(url)
-    except:
-        logging.warning("Não foi possível limpar webhook via HTTP")
-    
-    # Iniciar bot com polling
-    application.run_polling(drop_pending_updates=True)
+    # Configurar e iniciar o webhook
+    if WEBHOOK_URL:
+        # Modo webhook para Render
+        logging.info(f"Iniciando bot com webhook: {WEBHOOK_URL}")
+        
+        # Configurar webhook e iniciar o servidor
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=PORT,
+            url_path="webhook",
+            webhook_url=WEBHOOK_URL
+        )
+    else:
+        # Fallback para polling (para desenvolvimento local)
+        logging.info("WEBHOOK_URL não configurada. Usando polling (modo de desenvolvimento)")
+        try:
+            # Primeiro limpar webhooks de forma síncrona
+            import requests
+            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true"
+            requests.get(url)
+        except:
+            logging.warning("Não foi possível limpar webhook via HTTP")
+        
+        # Iniciar bot com polling
+        application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
